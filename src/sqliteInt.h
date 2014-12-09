@@ -553,51 +553,51 @@ struct BusyHandler {
 };
 
 /*
-** Name of the master database table.  The master database table
-** is a special table that holds the names and attributes of all
+** Name of the master database table.  The master database table   主数据库表名。  
+** is a special table that holds the names and attributes of all   主数据库表是一个特殊的表，拥有所有用户数据表和索引的名字和特征属性。
 ** user tables and indices.
 */
 #define MASTER_NAME       "sqlite_master"
 #define TEMP_MASTER_NAME  "sqlite_temp_master"
 
 /*
-** The root-page of the master database table.
+** The root-page of the master database table.    主数据库表的根页。
 */
 #define MASTER_ROOT       1
 
 /*
-** The name of the schema table.
+** The name of the schema table.   模式表表名。
 */
 #define SCHEMA_TABLE(x)  ((!OMIT_TEMPDB)&&(x==1)?TEMP_MASTER_NAME:MASTER_NAME)
 
 /*
-** A convenience macro that returns the number of elements in
+** A convenience macro that returns the number of elements in   一个很方便的宏，可以返回数组中元素的个数。
 ** an array.
 */
 #define ArraySize(X)    ((int)(sizeof(X)/sizeof(X[0])))
 
 /*
-** The following value as a destructor means to use sqlite3DbFree().
-** The sqlite3DbFree() routine requires two parameters instead of the 
-** one parameter that destructors normally want.  So we have to introduce 
+** The following value as a destructor means to use sqlite3DbFree().       以下的值作为一个析构函数意味着要使用sqlite3dbfree()
+** The sqlite3DbFree() routine requires two parameters instead of the      常规的sqlite3dbfree()需要两个参数来代替析构函数通常所需要的一个参数
+** one parameter that destructors normally want.  So we have to introduce  所以我们必须引入这个魔法值，魔法值的代码知道处理差异。
 ** this magic value that the code knows to handle differently.  Any 
-** pointer will work here as long as it is distinct from SQLITE_STATIC
+** pointer will work here as long as it is distinct from SQLITE_STATIC     所有指针，只要与SQLITE_STATIC和SQLITE_TRANSIENT不同，都在这里起作用。
 ** and SQLITE_TRANSIENT.
 */
 #define SQLITE_DYNAMIC   ((sqlite3_destructor_type)sqlite3MallocSize)
 
 /*
-** When SQLITE_OMIT_WSD is defined, it means that the target platform does
-** not support Writable Static Data (WSD) such as global and static variables.
-** All variables must either be on the stack or dynamically allocated from
-** the heap.  When WSD is unsupported, the variable declarations scattered
-** throughout the SQLite code must become constants instead.  The SQLITE_WSD
+** When SQLITE_OMIT_WSD is defined, it means that the target platform does     当SQLITE_OMIT_WSD被定义时，这就意味着目标平台不支持全局可写变量，例如全局变量和静态变量。
+** not support Writable Static Data (WSD) such as global and static variables.   WSD:全局可写变量Writable Static Data (WSD)
+** All variables must either be on the stack or dynamically allocated from     所有变量都必须是在堆栈上或从堆中动态分配的。
+** the heap.  When WSD is unsupported, the variable declarations scattered     当WSD不支持时，遍布在SQLite代码中的变量声明必须变成常数代替。
+** throughout the SQLite code must become constants instead.  The SQLITE_WSD   宏SQLITE_WSD就是用来达到这个目的的。
 ** macro is used for this purpose.  And instead of referencing the variable
-** directly, we use its constant as a key to lookup the run-time allocated
-** buffer that holds real variable.  The constant is also the initializer
+** directly, we use its constant as a key to lookup the run-time allocated     代替直接引用变量，我们使用常量作为查找运行时分配存放实型变量的缓冲区的关键。
+** buffer that holds real variable.  The constant is also the initializer      常量也是初始化运行时分配缓冲区的关键。
 ** for the run-time allocated buffer.
 **
-** In the usual case where WSD is supported, the SQLITE_WSD and GLOBAL
+** In the usual case where WSD is supported, the SQLITE_WSD and GLOBAL         在通常的情况下WSD是被支持的,宏SQLITE_WSD 和 GLOBAL成了空操作，并且不影响执行。
 ** macros become no-ops and have zero performance impact.
 */
 #ifdef SQLITE_OMIT_WSD
@@ -613,26 +613,26 @@ struct BusyHandler {
 #endif
 
 /*
-** The following macros are used to suppress compiler warnings and to
-** make it clear to human readers when a function parameter is deliberately 
+** The following macros are used to suppress compiler warnings and to          以下的宏被用来来抑制编译器警告，
+** make it clear to human readers when a function parameter is deliberately    而且当一个函数的参数是故意落在函数体内部未使用是，可以让人类读者清楚的知道这一点。
 ** left unused within the body of a function. This usually happens when
-** a function is called via a function pointer. For example the 
-** implementation of an SQL aggregate step callback may not use the
-** parameter indicating the number of arguments passed to the aggregate,
+** a function is called via a function pointer. For example the                这通常发生在通过一个函数指针的调用函数时。
+** implementation of an SQL aggregate step callback may not use the            例如，SQL聚合步骤的实现回调可能不会使用参数指出传递到总体的参数数量,
+** parameter indicating the number of arguments passed to the aggregate,       如果它知道这是在其他地方强制执行的。
 ** if it knows that this is enforced elsewhere.
 **
-** When a function parameter is not used at all within the body of a function,
+** When a function parameter is not used at all within the body of a function, 当一个函数的参数是根本不用在函数体内部，一般称之为 "NotUsed"或"NotUsed2"以使事情更加清晰。
 ** it is generally named "NotUsed" or "NotUsed2" to make things even clearer.
-** However, these macros may also be used to suppress warnings related to
+** However, these macros may also be used to suppress warnings related to      然而，这些宏也可以用来抑制，可能会或可能不会被用于根据编译选项参数相关的警告。
 ** parameters that may or may not be used depending on compilation options.
-** For example those parameters only used in assert() statements. In these
+** For example those parameters only used in assert() statements. In these     例如，这些参数仅用于assert()语句。在这些情况下，参数的命名按惯例。
 ** cases the parameters are named as per the usual conventions.
 */
 #define UNUSED_PARAMETER(x) (void)(x)
 #define UNUSED_PARAMETER2(x,y) UNUSED_PARAMETER(x),UNUSED_PARAMETER(y)
 
 /*
-** Forward references to structures
+** Forward references to structures   结构体的前置声明
 */
 typedef struct AggInfo AggInfo;
 typedef struct AuthContext AuthContext;
@@ -679,9 +679,9 @@ typedef struct WhereInfo WhereInfo;
 typedef struct WhereLevel WhereLevel;
 
 /*
-** Defer sourcing vdbe.h and btree.h until after the "u8" and 
-** "BusyHandler" typedefs. vdbe.h also requires a few of the opaque
-** pointer types (i.e. FuncDef) defined above.
+** Defer sourcing vdbe.h and btree.h until after the "u8" and               在"u8"和"BusyHandler"类型定义之后推迟 vdbe.h 和 btree.h的发起。
+** "BusyHandler" typedefs. vdbe.h also requires a few of the opaque         vdbe.h也需要一些不透明指针型(即函数定义)定义上面的东西。
+** pointer types (i.e. FuncDef) defined above.         不透明数据类型隐藏了它们内部格式或结构。在C语言中，它们就像黑盒一样。支持它们的语言不是很多。作为替代，开发者们利用typedef声明一个类型，把它叫做不透明类型，希望其他人别去把它重新转化回对应的那个标准C类型。
 */
 #include "btree.h"
 #include "vdbe.h"
@@ -693,18 +693,18 @@ typedef struct WhereLevel WhereLevel;
 
 
 /*
-** Each database file to be accessed by the system is an instance
-** of the following structure.  There are normally two of these structures
-** in the sqlite.aDb[] array.  aDb[0] is the main database file and
-** aDb[1] is the database file used to hold temporary tables.  Additional
-** databases may be attached.
+** Each database file to be accessed by the system is an instance  每个数据库文件将被系统访问下列结构实例。
+** of the following structure.  There are normally two of these structures  在数组sqlite.aDb[]里通常有两个这种结构。
+** in the sqlite.aDb[] array.  aDb[0] is the main database file and         aDb[0]是主数据库文件，aDb[1]是用于存放临时数据表的数据库文件。
+** aDb[1] is the database file used to hold temporary tables.  Additional   附加数据库可以被连接。
+** databases may be attached.  
 */
 struct Db {
-  char *zName;         /* Name of this database */
-  Btree *pBt;          /* The B*Tree structure for this database file */
+  char *zName;         /* Name of this database 数据库名称*/
+  Btree *pBt;          /* The B*Tree structure for this database file 数据库文件的B*Tree结构*/
   u8 inTrans;          /* 0: not writable.  1: Transaction.  2: Checkpoint */
-  u8 safety_level;     /* How aggressive at syncing data to disk */
-  Schema *pSchema;     /* Pointer to database schema (possibly shared) */
+  u8 safety_level;     /* How aggressive at syncing data to disk   0:不可写 1:事务处理  2:检查*/
+  Schema *pSchema;     /* Pointer to database schema (possibly shared) 指向数据库模式的指针(可能是共享的)*/
 };
 
 /*
@@ -1617,132 +1617,132 @@ typedef int ynVar;
 #endif
 
 /*
-** Each node of an expression in the parse tree is an instance
+** Each node of an expression in the parse tree is an instance			在分析数中表达式的每个节点是该结构的一个实例
 ** of this structure.
 **
-** Expr.op is the opcode. The integer parser token codes are reused
-** as opcodes here. For example, the parser defines TK_GE to be an integer
-** code representing the ">=" operator. This same integer code is reused
+** Expr.op is the opcode. The integer parser token codes are reused		Expr.op是操作码。整数解析器表示在这里代码重用为操作码
+** as opcodes here. For example, the parser defines TK_GE to be an integer	例如，解析器定义整数代码TK_GE代表>=操作符
+** code representing the ">=" operator. This same integer code is reused	相同的整数代码被重用来表示在表达式树中大于或等于操作数
 ** to represent the greater-than-or-equal-to operator in the expression
 ** tree.
 **
-** If the expression is an SQL literal (TK_INTEGER, TK_FLOAT, TK_BLOB, 
-** or TK_STRING), then Expr.token contains the text of the SQL literal. If
-** the expression is a variable (TK_VARIABLE), then Expr.token contains the 
-** variable name. Finally, if the expression is an SQL function (TK_FUNCTION),
+** If the expression is an SQL literal (TK_INTEGER, TK_FLOAT, TK_BLOB, 		如果表达式是一个SQL文字(TK_INTEGER,TK_FLOAT,TK_BLOB或TK_STRING)
+** or TK_STRING), then Expr.token contains the text of the SQL literal. If	那么Expr.token包含SQL文字的文本
+** the expression is a variable (TK_VARIABLE), then Expr.token contains the 	如果表达式是一个变量(TK_VARIABLE)，那么，Expr.token包含了变量的名字
+** variable name. Finally, if the expression is an SQL function (TK_FUNCTION),	最后，如果该表达式是一个SQL函数(TK_FUNCTION)，那么Expr.token包含了函数的名称
 ** then Expr.token contains the name of the function.
 **
-** Expr.pRight and Expr.pLeft are the left and right subexpressions of a
-** binary operator. Either or both may be NULL.
+** Expr.pRight and Expr.pLeft are the left and right subexpressions of a	Expr.pRight和Expr.pLeft是一个二元运算符左边和右边的子表达式
+** binary operator. Either or both may be NULL.					一个或者两个都可以为空
 **
-** Expr.x.pList is a list of arguments if the expression is an SQL function,
-** a CASE expression or an IN expression of the form "<lhs> IN (<y>, <z>...)".
-** Expr.x.pSelect is used if the expression is a sub-select or an expression of
-** the form "<lhs> IN (SELECT ...)". If the EP_xIsSelect bit is set in the
-** Expr.flags mask, then Expr.x.pSelect is valid. Otherwise, Expr.x.pList is 
+** Expr.x.pList is a list of arguments if the expression is an SQL function,	如果 表达式是一个SQL函数，Expr.x.pList是参数列表
+** a CASE expression or an IN expression of the form "<lhs> IN (<y>, <z>...)".	一个CASE表达式或者"<lhs>IN(<y>,<z>...)"形式的IN表达式
+** Expr.x.pSelect is used if the expression is a sub-select or an expression of	如果表达式是一个子选择或者"<lhs>IN(<y>,<z>...)"形式的表达式，Expr.x.pSelect会被使用
+** the form "<lhs> IN (SELECT ...)". If the EP_xIsSelect bit is set in the	如果Expr.x.pSelect位在Expr.flags被隐秘设置，那么Expr.x.pSelect是有效的
+** Expr.flags mask, then Expr.x.pSelect is valid. Otherwise, Expr.x.pList is 	否则，Expr.x.pList是有效的
 ** valid.
 **
-** An expression of the form ID or ID.ID refers to a column in a table.
-** For such expressions, Expr.op is set to TK_COLUMN and Expr.iTable is
-** the integer cursor number of a VDBE cursor pointing to that table and
-** Expr.iColumn is the column number for the specific column.  If the
-** expression is used as a result in an aggregate SELECT, then the
-** value is also stored in the Expr.iAgg column in the aggregate so that
-** it can be accessed after all aggregates are computed.
+** An expression of the form ID or ID.ID refers to a column in a table.		一个表达式表单的ID或ID。ID指表中的一列。
+** For such expressions, Expr.op is set to TK_COLUMN and Expr.iTable is		对这样的表达式，Expr.op设置TK_COLUMN,Expr.iTable是VDBE光标指向该表的整数光标号，
+** the integer cursor number of a VDBE cursor pointing to that table and	Expr.iTable是VDBE光标指向该表的整数光标号，
+** Expr.iColumn is the column number for the specific column.  If the		Expr.iCloumn是特定列的列数
+** expression is used as a result in an aggregate SELECT, then the		如果表达式用作一个聚合的SELECT的结果，
+** value is also stored in the Expr.iAgg column in the aggregate so that	那么该值也会被存储在聚合的Expr.iAgg中，
+** it can be accessed after all aggregates are computed.			以便它可以在所有聚合体被计算之后访问
 **
-** If the expression is an unbound variable marker (a question mark 
-** character '?' in the original SQL) then the Expr.iTable holds the index 
+** If the expression is an unbound variable marker (a question mark 		如果表达式是一个未绑定变量的标记(在原始的SQL中一个问号字符'?')
+** character '?' in the original SQL) then the Expr.iTable holds the index 	那么Expr.iTable持有该变量的索引。
 ** number for that variable.
 **
-** If the expression is a subquery then Expr.iColumn holds an integer
-** register number containing the result of the subquery.  If the
-** subquery gives a constant result, then iTable is -1.  If the subquery
-** gives a different answer at different times during statement processing
-** then iTable is the address of a subroutine that computes the subquery.
+** If the expression is a subquery then Expr.iColumn holds an integer		如果表达式是一个子查询，
+** register number containing the result of the subquery.  If the		Expr.iColumn记录包含子查询结果的整数寄存器号
+** subquery gives a constant result, then iTable is -1.  If the subquery	如果子查询提供了一个恒定的结果，那么iTable为-1
+** gives a different answer at different times during statement processing	如果子查询在语句处理过程中不同时间的结果不一样，
+** then iTable is the address of a subroutine that computes the subquery.	那么iTable是计算子查询的子程序的地址
 **
-** If the Expr is of type OP_Column, and the table it is selecting from
-** is a disk table or the "old.*" pseudo-table, then pTab points to the
-** corresponding table definition.
+** If the Expr is of type OP_Column, and the table it is selecting from		如果Expr是OP_Column类型的，
+** is a disk table or the "old.*" pseudo-table, then pTab points to the		表是从一个磁盘表或"old.*"伪表中选择出来的
+** corresponding table definition.						那么pTab是指向相应表的定义
 **
-** ALLOCATION NOTES:
+** ALLOCATION NOTES:								分配注意
 **
-** Expr objects can use a lot of memory space in database schema.  To
-** help reduce memory requirements, sometimes an Expr object will be
-** truncated.  And to reduce the number of memory allocations, sometimes
-** two or more Expr objects will be stored in a single memory allocation,
-** together with Expr.zToken strings.
+** Expr objects can use a lot of memory space in database schema.  To		Expr对象可以在数据库架构时使用大量的内存空间
+** help reduce memory requirements, sometimes an Expr object will be		为了帮助减少内存需求，有时一个Expr对象会被截断
+** truncated.  And to reduce the number of memory allocations, sometimes	为了减少存储器分配的数量，
+** two or more Expr objects will be stored in a single memory allocation,	有时两个或更多的Expr对象将被存储在一个内存单元
+** together with Expr.zToken strings.						连同Expr.zToken字符串
 **
-** If the EP_Reduced and EP_TokenOnly flags are set when
-** an Expr object is truncated.  When EP_Reduced is set, then all
-** the child Expr objects in the Expr.pLeft and Expr.pRight subtrees
-** are contained within the same memory allocation.  Note, however, that
+** If the EP_Reduced and EP_TokenOnly flags are set when			当Expr对象被截断EP_Reduced和EP_ToKenOnly标志被设置
+** an Expr object is truncated.  When EP_Reduced is set, then all		当EP_Reduced设置时，
+** the child Expr objects in the Expr.pLeft and Expr.pRight subtrees		Expr.pLeft和Expr.pRight子树的所有子Expr对象在相同的内存单元中
+** are contained within the same memory allocation.  Note, however, that	注意，无论EP_Reduced是否设置，Expr.x.pList和Expr.x.PSelect子树总是单独分配
 ** the subtrees in Expr.x.pList or Expr.x.pSelect are always separately
 ** allocated, regardless of whether or not EP_Reduced is set.
 */
 struct Expr {
-  u8 op;                 /* Operation performed by this node */
-  char affinity;         /* The affinity of the column or 0 if not a column */
-  u16 flags;             /* Various flags.  EP_* See below */
+  u8 op;                 /* Operation performed by this node 			操作由该节点进行*/
+  char affinity;         /* The affinity of the column or 0 if not a colum	 */
+  u16 flags;             /* Various flags.  EP_* See below 			 各种标志	EP_*参阅下文*/
   union {
-    char *zToken;          /* Token value. Zero terminated and dequoted */
-    int iValue;            /* Non-negative integer value if EP_IntValue */
+    char *zToken;          /* Token value. Zero terminated and dequoted 	 标记值。零终止，未引用*/
+    int iValue;            /* Non-negative integer value if EP_IntValu		 EP_IntValue非负整数值*/
   } u;
 
-  /* If the EP_TokenOnly flag is set in the Expr.flags mask, then no
-  ** space is allocated for the fields below this point. An attempt to
-  ** access them will result in a segfault or malfunction. 
+  /* If the EP_TokenOnly flag is set in the Expr.flags mask, then no		如果Expr.flags隐秘设置EP_TokenOnly标志，
+  ** space is allocated for the fields below this point. An attempt to		则没有空间分配该这点下面的字段
+  ** access them will result in a segfault or malfunction. 			试图访问它们将导致一个段错误或故障
   *********************************************************************/
 
-  Expr *pLeft;           /* Left subnode */
-  Expr *pRight;          /* Right subnode */
+  Expr *pLeft;           /* Left subnode 	左子节点*/
+  Expr *pRight;          /* Right subnode 	右子节点*/
   union {
-    ExprList *pList;     /* Function arguments or in "<expr> IN (<expr-list)" */
-    Select *pSelect;     /* Used for sub-selects and "<expr> IN (<select>)" */
+    ExprList *pList;     /* Function arguments or in "<expr> IN (<expr-list)" 	函数参数或者"<表达式>IN(<表达式列表>)*/
+    Select *pSelect;     /* Used for sub-selects and "<expr> IN (<select>)" 	用于子选择和"<表达式>IN(<选择>)"*/
   } x;
-  CollSeq *pColl;        /* The collation type of the column or 0 */
+  CollSeq *pColl;        /* The collation type of the column or 0 		列的整理类型或0*/
 
-  /* If the EP_Reduced flag is set in the Expr.flags mask, then no
-  ** space is allocated for the fields below this point. An attempt to
-  ** access them will result in a segfault or malfunction.
+  /* If the EP_Reduced flag is set in the Expr.flags mask, then no		如果Expr.flags隐秘设置EP_Reduced
+  ** space is allocated for the fields below this point. An attempt to		则没有空间被分配给这点下面的字段
+  ** access them will result in a segfault or malfunction.			试图访问它们将导致一个段错误或故障
   *********************************************************************/
 
-  int iTable;            /* TK_COLUMN: cursor number of table holding column
-                         ** TK_REGISTER: register number
-                         ** TK_TRIGGER: 1 -> new, 0 -> old */
-  ynVar iColumn;         /* TK_COLUMN: column index.  -1 for rowid.
-                         ** TK_VARIABLE: variable number (always >= 1). */
-  i16 iAgg;              /* Which entry in pAggInfo->aCol[] or ->aFunc[] */
-  i16 iRightJoinTable;   /* If EP_FromJoin, the right table of the join */
-  u8 flags2;             /* Second set of flags.  EP2_... */
-  u8 op2;                /* TK_REGISTER: original value of Expr.op
-                         ** TK_COLUMN: the value of p5 for OP_Column
-                         ** TK_AGG_FUNCTION: nesting depth */
-  AggInfo *pAggInfo;     /* Used by TK_AGG_COLUMN and TK_AGG_FUNCTION */
-  Table *pTab;           /* Table for TK_COLUMN expressions. */
+  int iTable;            /* TK_COLUMN: cursor number of table holding column	TK_COLUMN:表列持有光标数
+                         ** TK_REGISTER: register number			TK_REGISTER:寄存器号码
+                         ** TK_TRIGGER: 1 -> new, 0 -> old 			TK_TRIGGER:1->新,0->旧*/
+  ynVar iColumn;         /* TK_COLUMN: column index.  -1 for rowid.		TK_COLUMN:列索引。-1为ROWID
+                         ** TK_VARIABLE: variable number (always >= 1). 	TK_VARIABLE: 变量数(总是大于等于1)*/
+  i16 iAgg;              /* Which entry in pAggInfo->aCol[] or ->aFunc*/
+  i16 iRightJoinTable;   /* If EP_FromJoin, the right table of the join 	右表中的连接*/
+  u8 flags2;             /* Second set of flags.  EP2_... 			第二组的标志*/
+  u8 op2;                /* TK_REGISTER: original value of Expr.op		TK_REGISTER:Expr.op的原始值
+                         ** TK_COLUMN: the value of p5 for OP_Column		TK_COLUMN: 对于OP_Column，P5的值
+                         ** TK_AGG_FUNCTION: nesting depth 			TK_AGG_FUNCTION: 嵌套深度*/
+  AggInfo *pAggInfo;     /* Used by TK_AGG_COLUMN and TK_AGG_FUNCTION 		TK_AGG_COLUMN和TK_AGG_FUNCTION使用*/
+  Table *pTab;           /* Table for TK_COLUMN expressions. 			表达式TK_COLUMN的表*/
 #if SQLITE_MAX_EXPR_DEPTH>0
-  int nHeight;           /* Height of the tree headed by this node */
+  int nHeight;           /* Height of the tree headed by this node 		以此节点为根节点的数的高度*/
 #endif
 };
 
 /*
 ** The following are the meanings of bits in the Expr.flags field.
 */
-#define EP_FromJoin   0x0001  /* Originated in ON or USING clause of a join */
-#define EP_Agg        0x0002  /* Contains one or more aggregate functions */
-#define EP_Resolved   0x0004  /* IDs have been resolved to COLUMNs */
-#define EP_Error      0x0008  /* Expression contains one or more errors */
-#define EP_Distinct   0x0010  /* Aggregate function with DISTINCT keyword */
-#define EP_VarSelect  0x0020  /* pSelect is correlated, not constant */
-#define EP_DblQuoted  0x0040  /* token.z was originally in "..." */
-#define EP_InfixFunc  0x0080  /* True for an infix function: LIKE, GLOB, etc */
-#define EP_ExpCollate 0x0100  /* Collating sequence specified explicitly */
-#define EP_FixedDest  0x0200  /* Result needed in a specific register */
-#define EP_IntValue   0x0400  /* Integer value contained in u.iValue */
-#define EP_xIsSelect  0x0800  /* x.pSelect is valid (otherwise x.pList is) */
-#define EP_Hint       0x1000  /* Not used */
-#define EP_Reduced    0x2000  /* Expr struct is EXPR_REDUCEDSIZE bytes only */
-#define EP_TokenOnly  0x4000  /* Expr struct is EXPR_TOKENONLYSIZE bytes only */
-#define EP_Static     0x8000  /* Held in memory not obtained from malloc() */
+#define EP_FromJoin   0x0001  /* Originated in ON or USING clause of a join 	起源于连接的ON或USING语句*/
+#define EP_Agg        0x0002  /* Contains one or more aggregate functions 	包含了一个或多个聚合函数*/
+#define EP_Resolved   0x0004  /* IDs have been resolved to COLUMNs 		标识已经被解析到列*/
+#define EP_Error      0x0008  /* Expression contains one or more errors 	表达式包含一个或多个错误*/
+#define EP_Distinct   0x0010  /* Aggregate function with DISTINCT keyword 	有DISTINCT关键字的聚合函数*/
+#define EP_VarSelect  0x0020  /* pSelect is correlated, not constant 		pSelect是相关的，不是持续的*/
+#define EP_DblQuoted  0x0040  /* token.z was originally in "..." 		token.z源自于"..."*/
+#define EP_InfixFunc  0x0080  /* True for an infix function: LIKE, GLOB, etc 	适合于中缀功能:LINKE,GLOB等*/
+#define EP_ExpCollate 0x0100  /* Collating sequence specified explicitly 	排序序列明确规定*/
+#define EP_FixedDest  0x0200  /* Result needed in a specific register 		结果需要保存在一个特定的寄存器*/
+#define EP_IntValue   0x0400  /* Integer value contained in u.iValue 		包含在u.iValue的整数值*/
+#define EP_xIsSelect  0x0800  /* x.pSelect is valid (otherwise x.pList is) 	x.pSelect是有效的(否则x.pList是)*/
+#define EP_Hint       0x1000  /* Not used 					未使用*/
+#define EP_Reduced    0x2000  /* Expr struct is EXPR_REDUCEDSIZE bytes only 	Expr结构体是唯一的EXPR_REDUCEDSIZE字节*/
+#define EP_TokenOnly  0x4000  /* Expr struct is EXPR_TOKENONLYSIZE bytes only 	Expr结构体是唯一EXPR_TOKENONLYSIZE字节*/
+#define EP_Static     0x8000  /* Held in memory not obtained from malloc() 	保存在内存中没有用malloc()获得*/
 
 /*
 ** The following are the meanings of bits in the Expr.flags2 field.
@@ -1751,10 +1751,10 @@ struct Expr {
 #define EP2_Irreducible    0x0002  /* Cannot EXPRDUP_REDUCE this Expr */
 
 /*
-** The pseudo-routine sqlite3ExprSetIrreducible sets the EP2_Irreducible
-** flag on an expression structure.  This flag is used for VV&A only.  The
-** routine is implemented as a macro that only works when in debugging mode,
-** so as not to burden production code.
+** The pseudo-routine sqlite3ExprSetIrreducible sets the EP2_Irreducible	伪例程sqlite3ExprSetlrreducible通过表达式结构来设置EP2_Irreducible标志
+** flag on an expression structure.  This flag is used for VV&A only.  The	该标志只用于VV&A
+** routine is implemented as a macro that only works when in debugging mode,	例程被实现为一个只在调试模式下工作下工作的宏
+** so as not to burden production code.						以免生产代码产生负担
 */
 #ifdef SQLITE_DEBUG
 # define ExprSetIrreducible(X)  (X)->flags2 |= EP2_Irreducible
@@ -1763,7 +1763,7 @@ struct Expr {
 #endif
 
 /*
-** These macros can be used to test, set, or clear bits in the 
+** These macros can be used to test, set, or clear bits in the 			这些宏在Expr.flags字段可用于测试，置位或清零
 ** Expr.flags field.
 */
 #define ExprHasProperty(E,P)     (((E)->flags&(P))==(P))
@@ -1772,26 +1772,26 @@ struct Expr {
 #define ExprClearProperty(E,P)   (E)->flags&=~(P)
 
 /*
-** Macros to determine the number of bytes required by a normal Expr 
-** struct, an Expr struct with the EP_Reduced flag set in Expr.flags 
-** and an Expr struct with the EP_TokenOnly flag set.
+** Macros to determine the number of bytes required by a normal Expr 		宏来确定一个普通Expr结构体的字节数
+** struct, an Expr struct with the EP_Reduced flag set in Expr.flags 		有EP_Reduced标记设置Expr.flags的Expr结构体
+** and an Expr struct with the EP_TokenOnly flag set.				EP_TokenOnly设置的结构体
 */
-#define EXPR_FULLSIZE           sizeof(Expr)           /* Full size */
-#define EXPR_REDUCEDSIZE        offsetof(Expr,iTable)  /* Common features */
-#define EXPR_TOKENONLYSIZE      offsetof(Expr,pLeft)   /* Fewer features */
+#define EXPR_FULLSIZE           sizeof(Expr)           /* Full size 		全部大小*/
+#define EXPR_REDUCEDSIZE        offsetof(Expr,iTable)  /* Common features 	共同的特征*/
+#define EXPR_TOKENONLYSIZE      offsetof(Expr,pLeft)   /* Fewer features 	较少的特征*/
 
 /*
-** Flags passed to the sqlite3ExprDup() function. See the header comment 
-** above sqlite3ExprDup() for details.
+** Flags passed to the sqlite3ExprDup() function. See the header comment 	标志传递给sqlite3ExprDup()函数
+** above sqlite3ExprDup() for details.						在sqlite3ExprDup()头部进行了详细的注释
 */
 #define EXPRDUP_REDUCE         0x0001  /* Used reduced-size Expr nodes */
 
 /*
-** A list of expressions.  Each expression may optionally have a
-** name.  An expr/name combination can be used in several ways, such
-** as the list of "expr AS ID" fields following a "SELECT" or in the
-** list of "ID = expr" items in an UPDATE.  A list of expressions can
-** also be used as the argument to a function, in which case the a.zName
+** A list of expressions.  Each expression may optionally have a		表达式列表。每个表达式可以有一个名称
+** name.  An expr/name combination can be used in several ways, such		一个表达式/名称组合可以用于几个方面
+** as the list of "expr AS ID" fields following a "SELECT" or in the		比如在一个"SELECT"之后的"expr AS ID"列表
+** list of "ID = expr" items in an UPDATE.  A list of expressions can		或在UPDATE中"ID=expr"列表
+** also be used as the argument to a function, in which case the a.zName	表达式列表也可以被用作a.zName字段不被使用的函数的参数
 ** field is not used.
 */
 struct ExprList {
@@ -2521,19 +2521,19 @@ struct Sqlite3Config {
 ** Context pointer passed down through the tree-walk.
 */
 struct Walker {
-  int (*xExprCallback)(Walker*, Expr*);     /* Callback for expressions */
-  int (*xSelectCallback)(Walker*,Select*);  /* Callback for SELECTs */
-  Parse *pParse;                            /* Parser context.  */
-  int walkerDepth;                          /* Number of subqueries */
-  union {                                   /* Extra data for callback */
-    NameContext *pNC;                          /* Naming context */
-    int i;                                     /* Integer value */
-    SrcList *pSrcList;                         /* FROM clause */
-    struct SrcCount *pSrcCount;                /* Counting column references */
+  int (*xExprCallback)(Walker*, Expr*);     /* Callback for expressions *回调函数表达式/
+  int (*xSelectCallback)(Walker*,Select*);  /* Callback for SELECTs 回调函数SELECTs*/
+  Parse *pParse;                            /* Parser context. 分析器上下文 */
+  int walkerDepth;                          /* Number of subqueries 子查询数*/
+  union {                                   /* Extra data for callback 额外的回调数据*/
+    NameContext *pNC;                          /* Naming context 一个namecontext结构体的指针命名上下文*/
+    int i;                                     /* Integer value 定义一个整形*/
+    SrcList *pSrcList;                         /* FROM clause FROM子句*/
+    struct SrcCount *pSrcCount;                /* Counting column references计算列引用 */
   } u;
 };
 
-/* Forward declarations */
+/* Forward declarations 前置声明*/
 int sqlite3WalkExpr(Walker*, Expr*);
 int sqlite3WalkExprList(Walker*, ExprList*);
 int sqlite3WalkSelect(Walker*, Select*);
@@ -2543,15 +2543,15 @@ int sqlite3WalkSelectFrom(Walker*, Select*);
 /*
 ** Return code from the parse-tree walking primitives and their
 ** callbacks.
-*/
-#define WRC_Continue    0   /* Continue down into children */
-#define WRC_Prune       1   /* Omit children but continue walking siblings */
-#define WRC_Abort       2   /* Abandon the tree walk */
+从解析树遍历的结点和他们的回调函数返回代码*/
+#define WRC_Continue    0   /* Continue down into children 继续向下访问孩子结点*/
+#define WRC_Prune       1   /* Omit children but continue walking siblings 忽略孩子结点但继续访问兄弟结点*/
+#define WRC_Abort       2   /* Abandon the tree walk放弃树的遍历 */
 
 /*
 ** Assuming zIn points to the first byte of a UTF-8 character,
 ** advance zIn to point to the first byte of the next UTF-8 character.
-*/
+假设指针ZIN指向UTF-8字符的第一个字节，就将ZIN前进以指向下一个UTF-8字符的第一个字节。*/
 #define SQLITE_SKIP_UTF8(zIn) {                        \
   if( (*(zIn++))>=0xc0 ){                              \
     while( (*zIn & 0xc0)==0x80 ){ zIn++; }             \
@@ -2580,13 +2580,14 @@ int sqlite3CantopenError(int);
 ** FTS4 is really an extension for FTS3.  It is enabled using the
 ** SQLITE_ENABLE_FTS3 macro.  But to avoid confusion we also all
 ** the SQLITE_ENABLE_FTS4 macro to serve as an alisse for SQLITE_ENABLE_FTS3.
-*/
+FTS4是FTS3真正的延伸。它能够使用宏SQLITE_ENABLE_FTS3。但为了避免混淆，我们仍然将所有的SQLITE_ENABLE_FTS4作为alisse来服务于SQLITE_ENABLE_FTS3。*/
 #if defined(SQLITE_ENABLE_FTS4) && !defined(SQLITE_ENABLE_FTS3)
 # define SQLITE_ENABLE_FTS3
 #endif
 
 /*
 ** The ctype.h header is needed for non-ASCII systems.  It is also
+   头文件 ctype.h是非ASCII系统所必须的。当FTS3被包括于amalgamation中时，这个头文件对FTS3来说也是必需的。
 ** needed by FTS3 when FTS3 is included in the amalgamation.
 */
 #if !defined(SQLITE_ASCII) || \
@@ -2597,8 +2598,9 @@ int sqlite3CantopenError(int);
 /*
 ** The following macros mimic the standard library functions toupper(),
 ** isspace(), isalnum(), isdigit() and isxdigit(), respectively. The
+以下的宏分别模仿了标准库函数 toupper(),isspace(), isalnum(), isdigit() and isxdigit()。
 ** sqlite versions only work for ASCII characters, regardless of locale.
-*/
+该sqlite版本只对ASCII字符生效，不论区域。*/
 #ifdef SQLITE_ASCII
 # define sqlite3Toupper(x)  ((x)&~(sqlite3CtypeMap[(unsigned char)(x)]&0x20))
 # define sqlite3Isspace(x)   (sqlite3CtypeMap[(unsigned char)(x)]&0x01)
@@ -2618,7 +2620,7 @@ int sqlite3CantopenError(int);
 #endif
 
 /*
-** Internal function prototypes
+** Internal function prototypes内部函数原型
 */
 #define sqlite3StrICmp sqlite3_stricmp
 int sqlite3Strlen30(const char*);
@@ -2651,8 +2653,10 @@ int sqlite3HeapNearlyFull(void);
 ** use of alloca() to obtain space for large automatic objects.  By default,
 ** obtain space from malloc().
 **
+在具有充足的堆栈空间和支持alloca（）的系统中，使用alloca（）来为大型自动对象获取空间。在缺省的情况下，用 malloc()来获取空间。
 ** The alloca() routine never returns NULL.  This will cause code paths
 ** that deal with sqlite3StackAlloc() failures to be unreachable.
+alloca()永远不会返回空值，这将导致处理sqlite3StackAlloc()错误的代码路径不可达。
 */
 #ifdef SQLITE_USE_ALLOCA
 # define sqlite3StackAllocRaw(D,N)   alloca(N)
