@@ -11,21 +11,28 @@
 ******************************************************************************
 **
 ** This file contains code that is specific to Windows.
+** 此文件包含代码是特定于Windows.
 */
 #include "sqliteInt.h"
-#if SQLITE_OS_WIN               /* This file is used for Windows only */
+#if SQLITE_OS_WIN               /* This file is used for Windows only 这个文件是用来仅适用于Windows */
 
 #ifdef __CYGWIN__
 # include <sys/cygwin.h>
 #endif
 
 /*
+<<<<<<< HEAD
+** Include code that is common to all os_*.c file
+=======
 ** Include code that is common to all os_*.c files
+** 包含的代码适用于所有os_*.c文件 
+>>>>>>> 3d313061b3a68c29e8436c70be9f9507d13d8543
 */
 #include "os_common.h"
 
 /*
 ** Macro to find the minimum of two numeric values.
+** 宏找到至少两个数值。
 */
 #ifndef MIN
 # define MIN(x,y) ((x)<(y)?(x):(y))
@@ -33,6 +40,7 @@
 
 /*
 ** Some Microsoft compilers lack this definition.
+** 一些微软的编译器缺乏这种定义。
 */
 #ifndef INVALID_FILE_ATTRIBUTES
 # define INVALID_FILE_ATTRIBUTES ((DWORD)-1) 
@@ -48,58 +56,63 @@
 
 #ifndef SQLITE_OMIT_WAL
 /* Forward references */
-typedef struct winShm winShm;           /* A connection to shared-memory */
-typedef struct winShmNode winShmNode;   /* A region of shared-memory */
+/*向前引用*/
+typedef struct winShm winShm;           /* A connection to shared-memory 一个共享内存连接 */
+typedef struct winShmNode winShmNode;   /* A region of shared-memory 一个共享内存区域 */
 #endif
 
 /*
 ** WinCE lacks native support for file locking so we have to fake it
 ** with some code of our own.
+**WinCE缺乏原生支持文件锁定，所以我们必须用一些自己代码修改它
 */
 #if SQLITE_OS_WINCE
 typedef struct winceLock {
-  int nReaders;       /* Number of reader locks obtained */
-  BOOL bPending;      /* Indicates a pending lock has been obtained */
-  BOOL bReserved;     /* Indicates a reserved lock has been obtained */
-  BOOL bExclusive;    /* Indicates an exclusive lock has been obtained */
+  int nReaders;       /* Number of reader locks obtained 一些阅读器锁定所获取内容*/
+  BOOL bPending;      /* Indicates a pending lock has been obtained 指定一个已经获得未决锁*/
+  BOOL bReserved;     /* Indicates a reserved lock has been obtained 指定一个已经获得的保留锁*/
+  BOOL bExclusive;    /* Indicates an exclusive lock has been obtained 指定一个已经获得的排他锁*/
 } winceLock;
 #endif
 
 /*
 ** The winFile structure is a subclass of sqlite3_file* specific to the win32
 ** portability layer.
+**winfile结构是 sqlite3_file* 仅限于win32可移植层一个子类
 */
 typedef struct winFile winFile;
 struct winFile {
-  const sqlite3_io_methods *pMethod; /*** Must be first ***/
-  sqlite3_vfs *pVfs;      /* The VFS used to open this file */
-  HANDLE h;               /* Handle for accessing the file */
-  u8 locktype;            /* Type of lock currently held on this file */
-  short sharedLockByte;   /* Randomly chosen byte used as a shared lock */
-  u8 ctrlFlags;           /* Flags.  See WINFILE_* below */
-  DWORD lastErrno;        /* The Windows errno from the last I/O error */
+  const sqlite3_io_methods *pMethod; /*** Must be first 必须是首先的  ***/
+  sqlite3_vfs *pVfs;      /* The VFS used to open this file VFS用来打开此文件*/
+  HANDLE h;               /* Handle for accessing the file 访问文件的句柄 */
+  u8 locktype;            /* Type of lock currently held on this file 目前持有此文件的锁类型*/
+  short sharedLockByte;   /* Randomly chosen byte used as a shared lock 用作共享锁随机选择的字节*/
+  u8 ctrlFlags;           /* Flags.  See WINFILE_* below 标识.  见下文WINFILE_* */
+  DWORD lastErrno;        /* The Windows errno from the last I/O error Windows的错误号来源于最后一个I / O错误*/
 #ifndef SQLITE_OMIT_WAL
-  winShm *pShm;           /* Instance of shared memory on this file */
+  winShm *pShm;           /* Instance of shared memory on this file 此文件共享内存的实例*/
 #endif
-  const char *zPath;      /* Full pathname of this file */
-  int szChunk;            /* Chunk size configured by FCNTL_CHUNK_SIZE */
+  const char *zPath;      /* Full pathname of this file 这个文件的全路径名*/
+  int szChunk;            /* Chunk size configured by FCNTL_CHUNK_SIZE 通过FCNTL_CHUNK_SIZE配置的块大小 */
 #if SQLITE_OS_WINCE
-  LPWSTR zDeleteOnClose;  /* Name of file to delete when closing */
-  HANDLE hMutex;          /* Mutex used to control access to shared lock */  
-  HANDLE hShared;         /* Shared memory segment used for locking */
-  winceLock local;        /* Locks obtained by this instance of winFile */
-  winceLock *shared;      /* Global shared lock memory for the file  */
+  LPWSTR zDeleteOnClose;  /* Name of file to delete when closing 当关闭时删除文件的名称*/
+  HANDLE hMutex;          /* Mutex used to control access to shared lock 互斥用于控制访问共享锁*/  
+  HANDLE hShared;         /* Shared memory segment used for locking 共享内存段用于锁定*/
+  winceLock local;        /* Locks obtained by this instance of winFile 通过该WINFILE的实例获取锁*/
+  winceLock *shared;      /* Global shared lock memory for the file  储存该文件的全局共享锁*/
 #endif
 };
 
 /*
 ** Allowed values for winFile.ctrlFlags
+**允许winFile.ctrlFlags值
 */
-#define WINFILE_PERSIST_WAL     0x04   /* Persistent WAL mode */
+#define WINFILE_PERSIST_WAL     0x04   /* Persistent WAL mode 持续WAL模式*/
 #define WINFILE_PSOW            0x10   /* SQLITE_IOCAP_POWERSAFE_OVERWRITE */
 
 /*
  * The size of the buffer used by sqlite3_win32_write_debug().
+ *sqlite3_win32_write_debug所使用到的缓冲区的大小。
  */
 #ifndef SQLITE_WIN32_DBG_BUF_SIZE
 #  define SQLITE_WIN32_DBG_BUF_SIZE   ((int)(4096-sizeof(DWORD)))
@@ -108,6 +121,8 @@ struct winFile {
 /*
  * The value used with sqlite3_win32_set_directory() to specify that
  * the data directory should be changed.
+ *与sqlite3_win32_set_directory()使用的值指定
+ *数据目录应该有所改变。
  */
 #ifndef SQLITE_WIN32_DATA_DIRECTORY_TYPE
 #  define SQLITE_WIN32_DATA_DIRECTORY_TYPE (1)
@@ -116,6 +131,8 @@ struct winFile {
 /*
  * The value used with sqlite3_win32_set_directory() to specify that
  * the temporary directory should be changed.
+ *与sqlite3_win32_set_directory()中使用的值来指定
+ *临时目录应该改变。
  */
 #ifndef SQLITE_WIN32_TEMP_DIRECTORY_TYPE
 #  define SQLITE_WIN32_TEMP_DIRECTORY_TYPE (2)
@@ -124,6 +141,8 @@ struct winFile {
 /*
  * If compiled with SQLITE_WIN32_MALLOC on Windows, we will use the
  * various Win32 API heap functions instead of our own.
+ *如果有SQLITE_WIN32_MALLOC在Windows上编译，我们将使用
+ *不同的Win32 API堆函数，而不是我们自己的。
  */
 #ifdef SQLITE_WIN32_MALLOC
 
@@ -132,6 +151,9 @@ struct winFile {
  * allocator subsystem; otherwise, the default process heap will be used.  This
  * setting has no effect when compiling for WinRT.  By default, this is enabled
  * and an isolated heap will be created to store all allocated data.
+ * 如果这是非零，独立的堆将由本地的Win32分配器子系统创建； 
+ * 否则，默认的进程堆将被使用。当编译的WinRT的时候此设置不起作用。 
+ * 默认情况下，启用该选项和独立堆将创建用以存储所有分配的数据。
  *
  ******************************************************************************
  * WARNING: It is important to note that when this setting is non-zero and the
@@ -139,6 +161,9 @@ struct winFile {
  *          function), all data that was allocated using the isolated heap will
  *          be freed immediately and any attempt to access any of that freed
  *          data will almost certainly result in an immediate access violation.
+ * 警告: 需要注意的是，当该设置为非零并且winMemShutdown函数被调用
+ * (例如sqlite3_shutdown函数), 所有使用独立堆的被分配数据将会立即被释放，并且任
+ *何企图访问任何的释放数据几乎肯定会导致立即访问冲突 。
  ******************************************************************************
  */
 #ifndef SQLITE_WIN32_HEAP_CREATE
@@ -147,6 +172,7 @@ struct winFile {
 
 /*
  * The initial size of the Win32-specific heap.  This value may be zero.
+ *特定Win32堆的初始大小。这个值可以是零
  */
 #ifndef SQLITE_WIN32_HEAP_INIT_SIZE
 #  define SQLITE_WIN32_HEAP_INIT_SIZE ((SQLITE_DEFAULT_CACHE_SIZE) * \
@@ -155,6 +181,7 @@ struct winFile {
 
 /*
  * The maximum size of the Win32-specific heap.  This value may be zero.
+ *在特定Win32堆的最大大小。这个值可以是零。
  */
 #ifndef SQLITE_WIN32_HEAP_MAX_SIZE
 #  define SQLITE_WIN32_HEAP_MAX_SIZE  (0)
@@ -163,6 +190,7 @@ struct winFile {
 /*
  * The extra flags to use in calls to the Win32 heap APIs.  This value may be
  * zero for the default behavior.
+ * 在调用Win32的堆API中使用额外的标志.  这个值可以默认设置为0；
  */
 #ifndef SQLITE_WIN32_HEAP_FLAGS
 #  define SQLITE_WIN32_HEAP_FLAGS     (0)
@@ -171,14 +199,15 @@ struct winFile {
 /*
 ** The winMemData structure stores information required by the Win32-specific
 ** sqlite3_mem_methods implementation.
+**由特定Win32所要求的winMemData结构存储信息sqlite3_mem_methods实施。
 */
 typedef struct winMemData winMemData;
 struct winMemData {
 #ifndef NDEBUG
-  u32 magic;    /* Magic number to detect structure corruption. */
+  u32 magic;    /* Magic number to detect structure corruption. Magic数值来检测结构损坏 */
 #endif
-  HANDLE hHeap; /* The handle to our heap. */
-  BOOL bOwned;  /* Do we own the heap (i.e. destroy it on shutdown)? */
+  HANDLE hHeap; /* The handle to our heap. 我们堆的句柄 */
+  BOOL bOwned;  /* Do we own the heap (i.e. destroy it on shutdown)? 我们拥有这个堆吗(即关机销毁堆)? */
 };
 
 #ifndef NDEBUG
@@ -215,13 +244,17 @@ const sqlite3_mem_methods *sqlite3MemGetWin32(void);
 ** The following variable is (normally) set once and never changes
 ** thereafter.  It records whether the operating system is Win9x
 ** or WinNT.
+下面的变量（一般）设置一次，其后永远不会改变
+** 它记录的操作系统是否为Win9x的或WinNT。
 **
-** 0:   Operating system unknown.
-** 1:   Operating system is Win9x.
-** 2:   Operating system is WinNT.
+** 0:   Operating system unknown. 操作系统未知。
+** 1:   Operating system is Win9x. 操作系统是Win9x。
+** 2:   Operating system is WinNT. 操作系统是WinNT。
 **
 ** In order to facilitate testing on a WinNT system, the test fixture
 ** can manually set this value to 1 to emulate Win98 behavior.
+** 为了便于在WinNT系统上测试, 测试装置 
+** 可以手动将该值设置为1来模拟Win98的行为。
 */
 #ifdef SQLITE_TEST
 int sqlite3_os_type = 0;
@@ -243,6 +276,7 @@ static int sqlite3_os_type = 0;
 
 /*
 ** This function is not available on Windows CE or WinRT.
+**此功能不适用于Windows CE或WinRT。
  */
 
 #if SQLITE_OS_WINCE || SQLITE_OS_WINRT
@@ -254,11 +288,14 @@ static int sqlite3_os_type = 0;
 ** they may be overridden at runtime to facilitate fault injection during
 ** testing and sandboxing.  The following array holds the names and pointers
 ** to all overrideable system calls.
+** 许多系统调用被访问都是通过指针到功能以便
+** 在测试和沙盒时他们可能会在运行时重写来便于故障注入
+** 下面的数组保存的姓名和指针为所有重载系统所调用。
 */
 static struct win_syscall {
-  const char *zName;            /* Name of the sytem call */
-  sqlite3_syscall_ptr pCurrent; /* Current value of the system call */
-  sqlite3_syscall_ptr pDefault; /* Default value */
+  const char *zName;            /* Name of the sytem call 该系统正调用的名称*/
+  sqlite3_syscall_ptr pCurrent; /* Current value of the system call 系统调用的当前值*/
+  sqlite3_syscall_ptr pDefault; /* Default value 默认值*/
 } aSyscall[] = {
 #if !SQLITE_OS_WINCE && !SQLITE_OS_WINRT
   { "AreFileApisANSI",         (SYSCALL)AreFileApisANSI,         0 },
@@ -466,10 +503,13 @@ static struct win_syscall {
 
 #if SQLITE_OS_WINCE
   /* The GetProcAddressA() routine is only available on Windows CE. */
+  /*该GetProcAddressA（）函数是仅适用于Windows CE。 */
   { "GetProcAddressA",         (SYSCALL)GetProcAddressA,         0 },
 #else
   /* All other Windows platforms expect GetProcAddress() to take
-  ** an ANSI string regardless of the _UNICODE setting */
+  ** an ANSI string regardless of the _UNICODE setting 
+  **所有其他Windows平台预计GetProcAddress函数来使用
+  **一个ANSI字符串不管_UNICODE设置*/
   { "GetProcAddressA",         (SYSCALL)GetProcAddress,          0 },
 #endif
 
@@ -827,18 +867,21 @@ static struct win_syscall {
 #define osCreateFileMappingFromApp ((HANDLE(WINAPI*)(HANDLE, \
         LPSECURITY_ATTRIBUTES,ULONG,ULONG64,LPCWSTR))aSyscall[72].pCurrent)
 
-}; /* End of the overrideable system calls */
+}; /* End of the overrideable system calls 结束重载系统调用*/
 
 /*
 ** This is the xSetSystemCall() method of sqlite3_vfs for all of the
 ** "win32" VFSes.  Return SQLITE_OK opon successfully updating the
 ** system call pointer, or SQLITE_NOTFOUND if there is no configurable
 ** system call named zName.
+**这是对于所有"win32" VFSes的sqlite3_vfs的xSetSystemCall()方法
+**返回SQLITE_OK opon成功更新系统调用指针
+**或者这里SQLITE_NOTFOUND没有被叫做zName系统调用配置 
 */
 static int winSetSystemCall(
-  sqlite3_vfs *pNotUsed,        /* The VFS pointer.  Not used */
-  const char *zName,            /* Name of system call to override */
-  sqlite3_syscall_ptr pNewFunc  /* Pointer to new system call value */
+  sqlite3_vfs *pNotUsed,        /* The VFS pointer.  Not used 该VFS指针。未使用*/
+  const char *zName,            /* Name of system call to override 系统调用的名称覆盖*/
+  sqlite3_syscall_ptr pNewFunc  /* Pointer to new system call value 指向新的系统调用值*/
 ){
   unsigned int i;
   int rc = SQLITE_NOTFOUND;
@@ -847,6 +890,7 @@ static int winSetSystemCall(
   if( zName==0 ){
     /* If no zName is given, restore all system calls to their default
     ** settings and return NULL
+    *如果没有zName给出，恢复所有的系统调用为其默认设置和返回NULL
     */
     rc = SQLITE_OK;
     for(i=0; i<sizeof(aSyscall)/sizeof(aSyscall[0]); i++){
@@ -857,6 +901,7 @@ static int winSetSystemCall(
   }else{
     /* If zName is specified, operate on only the one system call
     ** specified.
+    * 如果zName是指定, 只在指定一个系统调用运行
     */
     for(i=0; i<sizeof(aSyscall)/sizeof(aSyscall[0]); i++){
       if( strcmp(zName, aSyscall[i].zName)==0 ){
@@ -877,6 +922,9 @@ static int winSetSystemCall(
 ** Return the value of a system call.  Return NULL if zName is not a
 ** recognized system call name.  NULL is also returned if the system call
 ** is currently undefined.
+**返回系统调用的数值。返回NULL如果zName不是
+**系统可认识的调用名称。如果系统调用是当前
+**没有定义的也返回NULL。 
 */
 static sqlite3_syscall_ptr winGetSystemCall(
   sqlite3_vfs *pNotUsed,
@@ -896,6 +944,9 @@ static sqlite3_syscall_ptr winGetSystemCall(
 ** then return the name of the first system call.  Return NULL if zName
 ** is the last system call or if zName is not the name of a valid
 ** system call.
+** 返回zName后的第一个系统调用的名称。 如果zName==NULL
+** 就返回第一个系统调用的名称。如果zName是最后一个的系统调用
+**或者如果zName不是一个有效的系统调用名称也返回NULL。
 */
 static const char *winNextSystemCall(sqlite3_vfs *p, const char *zName){
   int i = -1;
@@ -915,12 +966,14 @@ static const char *winNextSystemCall(sqlite3_vfs *p, const char *zName){
 /*
 ** This function outputs the specified (ANSI) string to the Win32 debugger
 ** (if available).
+**此功能输出指定（ANSI）字符串到Win32的调试器
+**（如果可用）。
 */
 
 void sqlite3_win32_write_debug(char *zBuf, int nBuf){
   char zDbgBuf[SQLITE_WIN32_DBG_BUF_SIZE];
-  int nMin = MIN(nBuf, (SQLITE_WIN32_DBG_BUF_SIZE - 1)); /* may be negative. */
-  if( nMin<-1 ) nMin = -1; /* all negative values become -1. */
+  int nMin = MIN(nBuf, (SQLITE_WIN32_DBG_BUF_SIZE - 1)); /* may be negative. 可能是负的。*/
+  if( nMin<-1 ) nMin = -1; /* all negative values become -1. 所有的负值变为-1。*/
   assert( nMin==-1 || nMin==0 || nMin<SQLITE_WIN32_DBG_BUF_SIZE );
 #if defined(SQLITE_WIN32_HAS_ANSI)
   if( nMin>0 ){
@@ -952,6 +1005,8 @@ void sqlite3_win32_write_debug(char *zBuf, int nBuf){
 /*
 ** The following routine suspends the current thread for at least ms
 ** milliseconds.  This is equivalent to the Win32 Sleep() interface.
+**以下常规暂停当前线程，至少毫秒。 
+**这相当于Win32的Sleep()接口
 */
 #if SQLITE_OS_WINRT
 static HANDLE sleepObj = NULL;
@@ -980,6 +1035,13 @@ void sqlite3_win32_sleep(DWORD milliseconds){
 ** this routine is used to determine if the host is Win95/98/ME or
 ** WinNT/2K/XP so that we will know whether or not we can safely call
 ** the LockFileEx() API.
+**返回true（不为零），如果我们在WinNT，Win2K，WinXP或者WinCE下运行的.
+**返回false（0）在Win95，Win98下，WinME下运行。
+**
+**这里有一个有趣的现象：Win95，Win98和WinME的平台下缺乏LockFileEx()的API。
+**但是，我们仍然可以使用静态链接替代 API，只要我们运行WIN95 /98/ME的时候
+**不调用它。一个常规调用则被用来判断是否主机是Win95/ 98 / ME或WinNT/2K/ XP
+**以便于我们能知道我们是否可以安全地调用LockFileEx()的API。
 */
 #if SQLITE_OS_WINCE || SQLITE_OS_WINRT
 # define isNT()  (1)
@@ -997,7 +1059,7 @@ void sqlite3_win32_sleep(DWORD milliseconds){
 
 #ifdef SQLITE_WIN32_MALLOC
 /*
-** Allocate nBytes of memory.
+** Allocate nBytes of memory.分配内存中的nBytes 
 */
 static void *winMemMalloc(int nBytes){
   HANDLE hHeap;
@@ -1020,7 +1082,7 @@ static void *winMemMalloc(int nBytes){
 }
 
 /*
-** Free memory.
+** Free memory.释放内存。
 */
 static void winMemFree(void *pPrior){
   HANDLE hHeap;
@@ -1032,7 +1094,7 @@ static void winMemFree(void *pPrior){
 #if !SQLITE_OS_WINRT && defined(SQLITE_WIN32_MALLOC_VALIDATE)
   assert ( osHeapValidate(hHeap, SQLITE_WIN32_HEAP_FLAGS, pPrior) );
 #endif
-  if( !pPrior ) return; /* Passing NULL to HeapFree is undefined. */
+  if( !pPrior ) return; /* Passing NULL to HeapFree is undefined. 传递NULL到HeapFree是未定义的。*/
   if( !osHeapFree(hHeap, SQLITE_WIN32_HEAP_FLAGS, pPrior) ){
     sqlite3_log(SQLITE_NOMEM, "failed to HeapFree block %p (%d), heap=%p",
                 pPrior, osGetLastError(), (void*)hHeap);
@@ -1040,7 +1102,7 @@ static void winMemFree(void *pPrior){
 }
 
 /*
-** Change the size of an existing memory allocation
+** Change the size of an existing memory allocation 更改现有的内存分配的大小
 */
 static void *winMemRealloc(void *pPrior, int nBytes){
   HANDLE hHeap;
@@ -1069,6 +1131,7 @@ static void *winMemRealloc(void *pPrior, int nBytes){
 
 /*
 ** Return the size of an outstanding allocation, in bytes.
+**返回一个未完成的分配大小，以字节为单位
 */
 static int winMemSize(void *p){
   HANDLE hHeap;
@@ -1093,37 +1156,39 @@ static int winMemSize(void *p){
 
 /*
 ** Round up a request size to the next valid allocation size.
+**集中一个请求大小到下一个有效的分配大小。
 */
 static int winMemRoundup(int n){
   return n;
 }
 
 /*
-** Initialize this module.
+** Initialize this module./*模块的初始*/ 
 */
-static int winMemInit(void *pAppData){
-  winMemData *pWinMemData = (winMemData *)pAppData;
+static int winMemInit(void *pAppData){/*定义一个静态整型的内存初始化函数，变量为指针型，没有返回值*/
+  winMemData *pWinMemData = (winMemData *)pAppData;/*定义一个winMemInit型的指针变量pWinMemDat*/
 
-  if( !pWinMemData ) return SQLITE_ERROR;
-  assert( pWinMemData->magic==WINMEM_MAGIC );
+  if( !pWinMemData ) return SQLITE_ERROR;/*如果pWinMemData的值不存在，就返回SQLITE_ERROR这样的提示/
+  assert( pWinMemData->magic==WINMEM_MAGIC );/*把这个指针变量指向magic，用WINMEM_MAGIC进行赋值
+*/
 
-#if !SQLITE_OS_WINRT && SQLITE_WIN32_HEAP_CREATE
+#if !SQLITE_OS_WINRT && SQLITE_WIN32_HEAP_CREATE/*如果有定义SQlite中操作系统不是winrt种跨平台应用程序架构，并且没有win32堆被创建时，就执行以下代码*/
   if( !pWinMemData->hHeap ){
-    pWinMemData->hHeap = osHeapCreate(SQLITE_WIN32_HEAP_FLAGS,
-                                      SQLITE_WIN32_HEAP_INIT_SIZE,
-                                      SQLITE_WIN32_HEAP_MAX_SIZE);
+    pWinMemData->hHeap = osHeapCreate(SQLITE_WIN32_HEAP_FLAGS,/*堆标志*/
+                                      SQLITE_WIN32_HEAP_INIT_SIZE,/*堆初始化大小*/ 
+                                      SQLITE_WIN32_HEAP_MAX_SIZE);/*堆最大的容量*/ 
     if( !pWinMemData->hHeap ){
       sqlite3_log(SQLITE_NOMEM,
           "failed to HeapCreate (%d), flags=%u, initSize=%u, maxSize=%u",
           osGetLastError(), SQLITE_WIN32_HEAP_FLAGS,
           SQLITE_WIN32_HEAP_INIT_SIZE, SQLITE_WIN32_HEAP_MAX_SIZE);
       return SQLITE_NOMEM;
-    }
-    pWinMemData->bOwned = TRUE;
-    assert( pWinMemData->bOwned );
+    }/*对对应的堆标志，大小，和最大容量进行赋值，返回SQLITE_NOME*/
+    pWinMemData->bOwned = TRUE;/*否则这个指针就指向bOwned，并赋值为真*/
+    assert( pWinMemData->bOwned );/*把这个指针变量指向bOwne*/
   }
 #else
-  pWinMemData->hHeap = osGetProcessHeap();
+  pWinMemData->hHeap = osGetProcessHeap();/*否则如果pWinMemData指向的hHeap是系统获取的进程中的堆值时，就执行以下代码*/
   if( !pWinMemData->hHeap ){
     sqlite3_log(SQLITE_NOMEM,
         "failed to GetProcessHeap (%d)", osGetLastError());
@@ -1133,23 +1198,25 @@ static int winMemInit(void *pAppData){
   assert( !pWinMemData->bOwned );
 #endif
   assert( pWinMemData->hHeap!=0 );
-  assert( pWinMemData->hHeap!=INVALID_HANDLE_VALUE );
-#if !SQLITE_OS_WINRT && defined(SQLITE_WIN32_MALLOC_VALIDATE)
-  assert( osHeapValidate(pWinMemData->hHeap, SQLITE_WIN32_HEAP_FLAGS, NULL) );
+  assert( pWinMemData->hHeap!=INVALID_HANDLE_VALUE );/*将一个无效的句柄值赋值给hHeap*/
+#if !SQLITE_OS_WINRT && defined(SQLITE_WIN32_MALLOC_VALIDATE)/*如果有定义SQlite中操作系统不是winrt种跨平台应用程序架构,
+或者定义win32 使用合法化*/
+  assert( osHeapValidate(pWinMemData->hHeap, SQLITE_WIN32_HEAP_FLAGS, NULL) );/*设置操作系统堆合法化的一系列变量*/ 
 #endif
   return SQLITE_OK;
 }
 
 /*
-** Deinitialize this module.
+** Deinitialize this module/*取消初始设置代码块*/ 
 */
-static void winMemShutdown(void *pAppData){
+static void winMemShutdown(void *pAppData)/*定义一个内存关闭的静态空函数*/{
   winMemData *pWinMemData = (winMemData *)pAppData;
 
   if( !pWinMemData ) return;
   if( pWinMemData->hHeap ){
     assert( pWinMemData->hHeap!=INVALID_HANDLE_VALUE );
-#if !SQLITE_OS_WINRT && defined(SQLITE_WIN32_MALLOC_VALIDATE)
+#if !SQLITE_OS_WINRT && defined(SQLITE_WIN32_MALLOC_VALIDATE)/*如果有定义SQlite中操作系统不是winrt种跨平台应用程序架构,
+或者定义win32 使用合法化*/
     assert( osHeapValidate(pWinMemData->hHeap, SQLITE_WIN32_HEAP_FLAGS, NULL) );
 #endif
     if( pWinMemData->bOwned ){
@@ -1167,10 +1234,11 @@ static void winMemShutdown(void *pAppData){
 ** Populate the low-level memory allocation function pointers in
 ** sqlite3GlobalConfig.m with pointers to the routines in this file. The
 ** arguments specify the block of memory to manage.
-**
+***//*在低级别的内存中分配函数指针，.m指针的程序文件指向这个文件的例行程序，参数指定内存管理*/
 ** This routine is only called by sqlite3_config(), and therefore
 ** is not required to be threadsafe (it is not).
 */
+/*这个例行程序仅被sqlite3_config()这个函数使用，因此不需要线程安全*/ 
 const sqlite3_mem_methods *sqlite3MemGetWin32(void){
   static const sqlite3_mem_methods winMemMethods = {
     winMemMalloc,
@@ -1188,13 +1256,14 @@ const sqlite3_mem_methods *sqlite3MemGetWin32(void){
 void sqlite3MemSetDefault(void){
   sqlite3_config(SQLITE_CONFIG_MALLOC, sqlite3MemGetWin32());
 }
-#endif /* SQLITE_WIN32_MALLOC */
+#endif /* SQLITE_WIN32_MALLOC *//*结束win32地址分配*/ 
 
 /*
 ** Convert a UTF-8 string to Microsoft Unicode (UTF-16?). 
-**
+**//*转换到微软Unicode（UTF-8字符串微软UTF-16)*/
 ** Space to hold the returned string is obtained from malloc.
-*/
+*//*空间来保存返回的字符串是由malloc来接收*/
+*/ 
 static LPWSTR utf8ToUnicode(const char *zFilename){
   int nChar;
   LPWSTR zWideFilename;
@@ -1219,7 +1288,7 @@ static LPWSTR utf8ToUnicode(const char *zFilename){
 /*
 ** Convert Microsoft Unicode to UTF-8.  Space to hold the returned string is
 ** obtained from sqlite3_malloc().
-*/
+*//*转换到微软Unicode UTF-8。保存返回的字符串是来自从sqlite3_malloc()*/
 static char *unicodeToUtf8(LPCWSTR zWideFilename){
   int nByte;
   char *zFilename;
@@ -1244,10 +1313,10 @@ static char *unicodeToUtf8(LPCWSTR zWideFilename){
 /*
 ** Convert an ANSI string to Microsoft Unicode, based on the
 ** current codepage settings for file apis.
-** 
+** /*将ANSI字符串转换到微软的Unicode，基于当前代码页设置文件的API*/
 ** Space to hold the returned string is obtained
 ** from sqlite3_malloc.
-*/
+*//*得到的空间来容纳返回的字符串sqlite3_malloc*/
 static LPWSTR mbcsToUnicode(const char *zFilename){
   int nByte;
   LPWSTR zMbcsFilename;
@@ -1274,10 +1343,10 @@ static LPWSTR mbcsToUnicode(const char *zFilename){
 /*
 ** Convert Microsoft Unicode to multi-byte character string, based on the
 ** user's ANSI codepage.
-**
+**//*微软Unicode转换成多字节字符的字符串，基于用户的codepage ANSi*/ 
 ** Space to hold the returned string is obtained from
 ** sqlite3_malloc().
-*/
+*//*所开辟的空间来保存返回的字符串，该字符串源自于fromsqlite3_malloc()*/
 static char *unicodeToMbcs(LPCWSTR zWideFilename){
   int nByte;
   char *zFilename;
@@ -1303,7 +1372,7 @@ static char *unicodeToMbcs(LPCWSTR zWideFilename){
 /*
 ** Convert multibyte character string to UTF-8.  Space to hold the
 ** returned string is obtained from sqlite3_malloc().
-*/
+*//*将多字节字符的字符串为UTF-8,空间来保存返回的字符串是源自于fromsqlite3_malloc()*/ 
 char *sqlite3_win32_mbcs_to_utf8(const char *zFilename){
   char *zFilenameUtf8;
   LPWSTR zTmpWide;
@@ -1320,7 +1389,7 @@ char *sqlite3_win32_mbcs_to_utf8(const char *zFilename){
 /*
 ** Convert UTF-8 to multibyte character string.  Space to hold the 
 ** returned string is obtained from sqlite3_malloc().
-*/
+*//*转换UTF-8多字节字符,空间来保存返回的字符串是源自于fromsqlite3_malloc()*/
 char *sqlite3_win32_utf8_to_mbcs(const char *zFilename){
   char *zFilenameMbcs;
   LPWSTR zTmpWide;
@@ -1340,7 +1409,8 @@ char *sqlite3_win32_utf8_to_mbcs(const char *zFilename){
 ** data directory or 2 in order to set the temporary directory.  The zValue
 ** argument is the name of the directory to use.  The return value will be
 ** SQLITE_OK if successful.
-*/
+*//*这个函数设置数据目录，或根据所提供的参数设置临时目录，类型参数必须以1组数据目录或2为了设置临时目录
+该zvalueargument是使用目录的名称。如果成功,返回值将是sqlite_ok*/
 int sqlite3_win32_set_directory(DWORD type, LPCWSTR zValue){
   char **ppDirectory = 0;
 #ifndef SQLITE_OMIT_AUTOINIT
@@ -1375,18 +1445,18 @@ int sqlite3_win32_set_directory(DWORD type, LPCWSTR zValue){
 ** The return value of getLastErrorMsg
 ** is zero if the error message fits in the buffer, or non-zero
 ** otherwise (if the message was truncated).
-*/
+*/ /*getlasterrormsg的返回值为零如果错误消息符合缓冲区或非零，否则（如果消息被截断）*/
 static int getLastErrorMsg(DWORD lastErrno, int nBuf, char *zBuf){
   /* FormatMessage returns 0 on failure.  Otherwise it
   ** returns the number of TCHARs written to the output
   ** buffer, excluding the terminating null char.
-  */
+  *//*FormatMessage返回0，失败。否则，它返回写入输出缓冲集数，不包括空结束字符串。*/
   DWORD dwLen = 0;
   char *zOut = 0;
 
   if( isNT() ){
 #if SQLITE_OS_WINRT
-    WCHAR zTempWide[MAX_PATH+1]; /* NOTE: Somewhat arbitrary. */
+    WCHAR zTempWide[MAX_PATH+1]; /* NOTE: Somewhat arbitrary.注意：稍微有点武断 */
     dwLen = osFormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM |
                              FORMAT_MESSAGE_IGNORE_INSERTS,
                              NULL,
@@ -1408,12 +1478,12 @@ static int getLastErrorMsg(DWORD lastErrno, int nBuf, char *zBuf){
                              0);
 #endif
     if( dwLen > 0 ){
-      /* allocate a buffer and convert to UTF8 */
+      /* allocate a buffer and convert to UTF8 *//*分配一个缓冲区并转换为UTF8*/
       sqlite3BeginBenignMalloc();
       zOut = unicodeToUtf8(zTempWide);
       sqlite3EndBenignMalloc();
 #if !SQLITE_OS_WINRT
-      /* free the system buffer allocated by FormatMessage */
+      /* free the system buffer allocated by FormatMessage *//*免费分配的格式化信息系统的缓冲区*/
       osLocalFree(zTempWide);
 #endif
     }
@@ -1431,11 +1501,11 @@ static int getLastErrorMsg(DWORD lastErrno, int nBuf, char *zBuf){
                              0,
                              0);
     if( dwLen > 0 ){
-      /* allocate a buffer and convert to UTF8 */
+      /* allocate a buffer and convert to UTF8 *//*分配一个缓冲区并转换为UTF8*/
       sqlite3BeginBenignMalloc();
       zOut = sqlite3_win32_mbcs_to_utf8(zTemp);
       sqlite3EndBenignMalloc();
-      /* free the system buffer allocated by FormatMessage */
+      /* free the system buffer allocated by FormatMessage *//*免费分配的格式化信息系统的缓冲区*/
       osLocalFree(zTemp);
     }
   }
@@ -1443,9 +1513,9 @@ static int getLastErrorMsg(DWORD lastErrno, int nBuf, char *zBuf){
   if( 0 == dwLen ){
     sqlite3_snprintf(nBuf, zBuf, "OsError 0x%x (%u)", lastErrno, lastErrno);
   }else{
-    /* copy a maximum of nBuf chars to output buffer */
+    /* copy a maximum of nBuf chars to output buffer *//*复制一个最大的nbuf字符输出缓冲区*/
     sqlite3_snprintf(nBuf, zBuf, "%s", zOut);
-    /* free the UTF8 buffer */
+    /* free the UTF8 buffer *//*the UTF8无缓冲*/
     sqlite3_free(zOut);
   }
   return 0;
@@ -1454,28 +1524,31 @@ static int getLastErrorMsg(DWORD lastErrno, int nBuf, char *zBuf){
 /*
 **
 ** This function - winLogErrorAtLine() - is only ever called via the macro
-** winLogError().
+** winLogError()这个函数winlogerroratline() -曾经是称为通过宏观winlogerror()。
 **
 ** This routine is invoked after an error occurs in an OS function.
 ** It logs a message using sqlite3_log() containing the current value of
 ** error code and, if possible, the human-readable equivalent from 
-** FormatMessage.
+** FormatMessage.这个程序调用操作系统函数发生错误后。这一消息日志使用含有错误代码的当前值sqlite3_log()
+如果可能的话，从FormatMessage人类可读的等效。
 **
 ** The first argument passed to the macro should be the error code that
 ** will be returned to SQLite (e.g. SQLITE_IOERR_DELETE, SQLITE_CANTOPEN). 
 ** The two subsequent arguments should be the name of the OS function that
-** failed and the associated file-system path, if any.
+** failed and the associated file-system path, if any.第一个参数传递给宏应该是错误代码，
+将返回到SQLite（例如sqlite_ioerr_delete，sqlite_cantopen）。
+随后的两个参数应该是操作系统功能的失败和相关的文件系统路径的名称，如。
 */
 #define winLogError(a,b,c,d)   winLogErrorAtLine(a,b,c,d,__LINE__)
 static int winLogErrorAtLine(
-  int errcode,                    /* SQLite error code */
-  DWORD lastErrno,                /* Win32 last error */
-  const char *zFunc,              /* Name of OS function that failed */
-  const char *zPath,              /* File path associated with error */
-  int iLine                       /* Source line number where error occurred */
+  int errcode,                    /* SQLite error code *//*SQLite的错误代码*/
+  DWORD lastErrno,                /* Win32 last error *//*Win32最后错误*/
+  const char *zFunc,              /* Name of OS function that failed *//*名称操作系统功能的失败*/
+  const char *zPath,              /* File path associated with error *//*文件路径相关的错误*/ 
+  int iLine                       /* Source line number where error occurred *//*发生错误的代码行数*/
 ){
-  char zMsg[500];                 /* Human readable error text */
-  int i;                          /* Loop counter */
+  char zMsg[500];                 /* Human readable error text *//*readable错误文本*/
+  int i;                          /* Loop counter *//*循环计数器*/
 
   zMsg[0] = 0;
   getLastErrorMsg(lastErrno, sizeof(zMsg), zMsg);
@@ -1496,6 +1569,8 @@ static int winLogErrorAtLine(
 ** will be retried following a locking error - probably caused by 
 ** antivirus software.  Also the initial delay before the first retry.
 ** The delay increases linearly with each retry.
+*//*readfile()，writefile()，和deletefile()将重试后锁定错误可能造成的杀毒软件次数。
+同时初始延迟在第一次重试延迟后随着每次重试的增加而线性增加。
 */
 #ifndef SQLITE_WIN32_IOERR_RETRY
 # define SQLITE_WIN32_IOERR_RETRY 10
@@ -1510,7 +1585,8 @@ static int win32IoerrRetryDelay = SQLITE_WIN32_IOERR_RETRY_DELAY;
 ** If a ReadFile() or WriteFile() error occurs, invoke this routine
 ** to see if it should be retried.  Return TRUE to retry.  Return FALSE
 ** to give up with an error.
-*/
+*//*如果一个readfile()或writefile()错误发生时，调用这个例程看是否应该重试。
+重试,返回true，错误,返回false*/ 
 static int retryIoerr(int *pnRetry, DWORD *pError){
   DWORD e = osGetLastError();
   if( *pnRetry>=win32IoerrRetry ){
@@ -1534,7 +1610,7 @@ static int retryIoerr(int *pnRetry, DWORD *pError){
 
 /*
 ** Log a I/O error retry episode.
-*/
+*//*日志I/O错误重试集*/
 static void logIoerr(int nRetry){
   if( nRetry ){
     sqlite3_log(SQLITE_IOERR, 
@@ -1547,11 +1623,11 @@ static void logIoerr(int nRetry){
 #if SQLITE_OS_WINCE
 /*************************************************************************
 ** This section contains code for WinCE only.
-*/
+*//*本节包含的代码只用于WinCE*/
 /*
 ** Windows CE does not have a localtime() function.  So create a
 ** substitute.
-*/
+*//*Windows CE没有localtime()功能。所以建立一个替代的*/
 #include <time.h>
 struct tm *__cdecl localtime(const time_t *t)
 {
@@ -1579,7 +1655,7 @@ struct tm *__cdecl localtime(const time_t *t)
 
 /*
 ** Acquire a lock on the handle h
-*/
+*//*获取对处理H锁*/
 static void winceMutexAcquire(HANDLE h){
    DWORD dwErr;
    do {
@@ -1588,13 +1664,13 @@ static void winceMutexAcquire(HANDLE h){
 }
 /*
 ** Release a lock acquired by winceMutexAcquire()
-*/
+*//*通过wincemutexacquire()释放锁*/
 #define winceMutexRelease(h) ReleaseMutex(h)
 
 /*
 ** Create the mutex and shared memory used for locking in the file
 ** descriptor pFile
-*/
+*//*创建互斥体和用于锁定的文件描述符pfile共享内存*/
 static BOOL winceCreateLock(const char *zFilename, winFile *pFile){
   LPWSTR zTok;
   LPWSTR zName;
@@ -1602,21 +1678,21 @@ static BOOL winceCreateLock(const char *zFilename, winFile *pFile){
 
   zName = utf8ToUnicode(zFilename);
   if( zName==0 ){
-    /* out of memory */
+    /* out of memory *//*内存不足*/
     return FALSE;
   }
 
-  /* Initialize the local lockdata */
+  /* Initialize the local lockdata *//*初始化的局部lockdata*/
   memset(&pFile->local, 0, sizeof(pFile->local));
 
   /* Replace the backslashes from the filename and lowercase it
-  ** to derive a mutex name. */
+  ** to derive a mutex name. *//*从文件名替换反斜线和小写得出一个互斥体的名称。*/
   zTok = osCharLowerW(zName);
   for (;*zTok;zTok++){
     if (*zTok == '\\') *zTok = '_';
   }
 
-  /* Create/open the named mutex */
+  /* Create/open the named mutex *//*创建/打开命名互斥*/
   pFile->hMutex = osCreateMutexW(NULL, FALSE, zName);
   if (!pFile->hMutex){
     pFile->lastErrno = osGetLastError();
@@ -1625,31 +1701,32 @@ static BOOL winceCreateLock(const char *zFilename, winFile *pFile){
     return FALSE;
   }
 
-  /* Acquire the mutex before continuing */
+  /* Acquire the mutex before continuing *//*在继续之前获得互斥体*/
   winceMutexAcquire(pFile->hMutex);
   
   /* Since the names of named mutexes, semaphores, file mappings etc are 
   ** case-sensitive, take advantage of that by uppercasing the mutex name
   ** and using that as the shared filemapping name.
-  */
+  *//*因为命名为互斥信号量，文件映射等的名称是区分大小写的，
+  利用这一点通过uppercasing互斥名称和使用作为共享文件映射名称*/
   osCharUpperW(zName);
   pFile->hShared = osCreateFileMappingW(INVALID_HANDLE_VALUE, NULL,
                                         PAGE_READWRITE, 0, sizeof(winceLock),
                                         zName);  
 
-  /* Set a flag that indicates we're the first to create the memory so it 
-  ** must be zero-initialized */
+  /* Set a /*flag that indicates we're the first to create the memory so it 
+  ** must be zero-initialized *//*设置一个标志，表明我们第一个创建内存必须初始化为零的*/
   if (osGetLastError() == ERROR_ALREADY_EXISTS){
     bInit = FALSE;
   }
 
   sqlite3_free(zName);
 
-  /* If we succeeded in making the shared memory handle, map it. */
+  /* If we /*succeeded in making the shared memory handle, map it. *//*如果我们成功地使共享内存句柄，来映射它*/ 
   if (pFile->hShared){
     pFile->shared = (winceLock*)osMapViewOfFile(pFile->hShared, 
              FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, sizeof(winceLock));
-    /* If mapping failed, close the shared memory handle and erase it */
+    /* If /*mapping failed, close the shared memory handle and erase it *//*如果映射失败，关闭共享内存句柄和清除它*/
     if (!pFile->shared){
       pFile->lastErrno = osGetLastError();
       winLogError(SQLITE_ERROR, pFile->lastErrno,
@@ -1659,7 +1736,7 @@ static BOOL winceCreateLock(const char *zFilename, winFile *pFile){
     }
   }
 
-  /* If shared memory could not be created, then close the mutex and fail */
+  /* If shared memory could not be created, then close the mutex and fail *//*如果无法创建共享内存，然后关闭互斥，就失败*/
   if (pFile->hShared == NULL){
     winceMutexRelease(pFile->hMutex);
     osCloseHandle(pFile->hMutex);
@@ -1667,7 +1744,7 @@ static BOOL winceCreateLock(const char *zFilename, winFile *pFile){
     return FALSE;
   }
   
-  /* Initialize the shared memory if we're supposed to */
+  /* Initialize the shared memory if we're supposed to *//*如果我们假设可以共享内存*/ 
   if (bInit) {
     memset(pFile->shared, 0, sizeof(winceLock));
   }
@@ -1677,15 +1754,16 @@ static BOOL winceCreateLock(const char *zFilename, winFile *pFile){
 }
 
 /*
-** Destroy the part of winFile that deals with wince locks
+** Destroy the part of winFile that deals with wince locks/*破坏winfile，WinCE锁交易的一部分*/
 */
 static void winceDestroyLock(winFile *pFile){
   if (pFile->hMutex){
-    /* Acquire the mutex */
+    /* Acquire the mutex *//*获取互斥体*/
     winceMutexAcquire(pFile->hMutex);
 
     /* The following blocks should probably assert in debug mode, but they
-       are to cleanup in case any locks remained open */
+       are to cleanup in case any locks remained open *//*下面的模块应该嵌入到调试模式，但他们
+会被清除在任何情况下锁打开*/
     if (pFile->local.nReaders){
       pFile->shared->nReaders --;
     }
@@ -1699,11 +1777,11 @@ static void winceDestroyLock(winFile *pFile){
       pFile->shared->bExclusive = FALSE;
     }
 
-    /* De-reference and close our copy of the shared memory handle */
+    /* De-reference and close our copy of the shared memory handle *//*取消引用关闭了我们的共享内存的句柄复制*/ 
     osUnmapViewOfFile(pFile->shared);
     osCloseHandle(pFile->hShared);
 
-    /* Done with the mutex */
+    /* Done with the mutex *//*用互斥*/
     winceMutexRelease(pFile->hMutex);    
     osCloseHandle(pFile->hMutex);
     pFile->hMutex = NULL;
@@ -1712,7 +1790,7 @@ static void winceDestroyLock(winFile *pFile){
 
 /* 
 ** An implementation of the LockFile() API of Windows for CE
-*/
+*//*Windows CE API的lockfile()实现*/
 static BOOL winceLockFile(
   LPHANDLE phFile,
   DWORD dwFileOffsetLow,
@@ -1729,7 +1807,7 @@ static BOOL winceLockFile(
   if (!pFile->hMutex) return TRUE;
   winceMutexAcquire(pFile->hMutex);
 
-  /* Wanting an exclusive lock? */
+  /* Wanting an exclusive lock? *//*想独占锁*/
   if (dwFileOffsetLow == (DWORD)SHARED_FIRST
        && nNumberOfBytesToLockLow == (DWORD)SHARED_SIZE){
     if (pFile->shared->nReaders == 0 && pFile->shared->bExclusive == 0){
@@ -1739,7 +1817,7 @@ static BOOL winceLockFile(
     }
   }
 
-  /* Want a read-only lock? */
+  /* Want a read-only lock? *//*想要一个只读的锁?/
   else if (dwFileOffsetLow == (DWORD)SHARED_FIRST &&
            nNumberOfBytesToLockLow == 1){
     if (pFile->shared->bExclusive == 0){
@@ -1751,9 +1829,9 @@ static BOOL winceLockFile(
     }
   }
 
-  /* Want a pending lock? */
+  /* Want a pending lock? *//*要挂起锁?/
   else if (dwFileOffsetLow == (DWORD)PENDING_BYTE && nNumberOfBytesToLockLow == 1){
-    /* If no pending lock has been acquired, then acquire it */
+    /* If no pending lock has been acquired, then acquire it *//*如果没有待定锁已被收购，然后得到它*/
     if (pFile->shared->bPending == 0) {
       pFile->shared->bPending = TRUE;
       pFile->local.bPending = TRUE;
@@ -1761,7 +1839,7 @@ static BOOL winceLockFile(
     }
   }
 
-  /* Want a reserved lock? */
+  /* Want a reserved lock? *//*要保留的锁?/
   else if (dwFileOffsetLow == (DWORD)RESERVED_BYTE && nNumberOfBytesToLockLow == 1){
     if (pFile->shared->bReserved == 0) {
       pFile->shared->bReserved = TRUE;
@@ -1776,7 +1854,7 @@ static BOOL winceLockFile(
 
 /*
 ** An implementation of the UnlockFile API of Windows for CE
-*/
+*//*Windows?CE的unlockfile?API的实现*/
 static BOOL winceUnlockFile(
   LPHANDLE phFile,
   DWORD dwFileOffsetLow,
@@ -1793,9 +1871,9 @@ static BOOL winceUnlockFile(
   if (!pFile->hMutex) return TRUE;
   winceMutexAcquire(pFile->hMutex);
 
-  /* Releasing a reader lock or an exclusive lock */
+  /* Releasing a reader lock or an exclusive lock *//*释放读锁或排它的锁*/ 
   if (dwFileOffsetLow == (DWORD)SHARED_FIRST){
-    /* Did we have an exclusive lock? */
+    /* Did we have an exclusive lock? *//*我们有一个专属的锁？*/
     if (pFile->local.bExclusive){
       assert(nNumberOfBytesToUnlockLow == (DWORD)SHARED_SIZE);
       pFile->local.bExclusive = FALSE;
@@ -1803,7 +1881,7 @@ static BOOL winceUnlockFile(
       bReturn = TRUE;
     }
 
-    /* Did we just have a reader lock? */
+    /* Did we just have a reader lock? *//*我们是不是有可读的锁*/
     else if (pFile->local.nReaders){
       assert(nNumberOfBytesToUnlockLow == (DWORD)SHARED_SIZE || nNumberOfBytesToUnlockLow == 1);
       pFile->local.nReaders --;
@@ -1815,7 +1893,7 @@ static BOOL winceUnlockFile(
     }
   }
 
-  /* Releasing a pending lock */
+  /* Releasing a pending lock *//*释放一个等待的锁*/
   else if (dwFileOffsetLow == (DWORD)PENDING_BYTE && nNumberOfBytesToUnlockLow == 1){
     if (pFile->local.bPending){
       pFile->local.bPending = FALSE;
@@ -1823,7 +1901,7 @@ static BOOL winceUnlockFile(
       bReturn = TRUE;
     }
   }
-  /* Releasing a reserved lock */
+  /* Releasing a reserved lock *//*释放保留的锁*/ 
   else if (dwFileOffsetLow == (DWORD)RESERVED_BYTE && nNumberOfBytesToUnlockLow == 1){
     if (pFile->local.bReserved) {
       pFile->local.bReserved = FALSE;
@@ -1836,13 +1914,13 @@ static BOOL winceUnlockFile(
   return bReturn;
 }
 /*
-** End of the special code for wince
+** End of the special code for wince/* wincewince的特殊码结束*/ 
 *****************************************************************************/
 #endif /* SQLITE_OS_WINCE */
 
 /*
 ** Lock a file region.
-*/
+*//*锁定文件区*/
 static BOOL winLockFile(
   LPHANDLE phFile,
   DWORD flags,
@@ -1855,7 +1933,7 @@ static BOOL winLockFile(
   /*
   ** NOTE: Windows CE is handled differently here due its lack of the Win32
   **       API LockFile.
-  */
+  *//*Windows CE是不同，这里的Win32API的lockfile由于缺乏处理*/ 
   return winceLockFile(phFile, offsetLow, offsetHigh,
                        numBytesLow, numBytesHigh);
 #else
@@ -1874,7 +1952,7 @@ static BOOL winLockFile(
 
 /*
 ** Unlock a file region.
- */
+ *//*unlock的文件区*/ 
 static BOOL winUnlockFile(
   LPHANDLE phFile,
   DWORD offsetLow,
@@ -1886,7 +1964,7 @@ static BOOL winUnlockFile(
   /*
   ** NOTE: Windows CE is handled differently here due its lack of the Win32
   **       API UnlockFile.
-  */
+  *//*注：Windows CE是不同，这里的Win32?API?unlockfile由于缺乏处理*/ 
   return winceUnlockFile(phFile, offsetLow, offsetHigh,
                          numBytesLow, numBytesHigh);
 #else
@@ -1907,10 +1985,10 @@ static BOOL winUnlockFile(
 ** The next group of routines implement the I/O methods specified
 ** by the sqlite3_io_methods object.
 ******************************************************************************/
-
+/*一组例程执行的I / O方法所指定的sqlite3_io_methods对象。*/
 /*
 ** Some Microsoft compilers lack this definition.
-*/
+*//*一些微软的编译器缺乏这种定义*/
 #ifndef INVALID_SET_FILE_POINTER
 # define INVALID_SET_FILE_POINTER ((DWORD)-1)
 #endif
@@ -1919,13 +1997,14 @@ static BOOL winUnlockFile(
 ** Move the current position of the file handle passed as the first 
 ** argument to offset iOffset within the file. If successful, return 0. 
 ** Otherwise, set pFile->lastErrno and return non-zero.
-*/
+*//*移动文件的当前位置的手柄来抵消IOFFSET文件中的第一个参数传递。如果成功，返回0。
+否则，将返回非零lasterrno pfile ->。*/
 static int seekWinFile(winFile *pFile, sqlite3_int64 iOffset){
 #if !SQLITE_OS_WINRT
-  LONG upperBits;                 /* Most sig. 32 bits of new offset */
-  LONG lowerBits;                 /* Least sig. 32 bits of new offset */
-  DWORD dwRet;                    /* Value returned by SetFilePointer() */
-  DWORD lastErrno;                /* Value returned by GetLastError() */
+  LONG upperBits;                 /* Most sig. 32 bits of new offset *//*最重要的。新32位的偏移*/
+  LONG lowerBits;                 /* Least sig. 32 bits of new offset *//*最小信号。新32位的偏移*/
+  DWORD dwRet;                    /* Value returned by SetFilePointer() *//*通过setfilepointer()返回值*/
+  DWORD lastErrno;                /* Value returned by GetLastError() *//*通过getlasterror()返回值*/
 
   upperBits = (LONG)((iOffset>>32) & 0x7fffffff);
   lowerBits = (LONG)(iOffset & 0xffffffff);
@@ -1936,7 +2015,10 @@ static int seekWinFile(winFile *pFile, sqlite3_int64 iOffset){
   ** INVALID_SET_FILE_POINTER may also be a valid new offset. So to determine 
   ** whether an error has actually occured, it is also necessary to call 
   ** GetLastError().
-  */
+  *//*API的怪事：如果成功，返回一个DWORD含有setfilepointer()的低32位新的文件偏移。
+  或者，如果失败，则返回invalid_set_file_pointer。
+  然而据MSDN，invalid_set_file_pointer也可能是一个有效的新的偏移量。
+  以确定是否有错误确实发生，它也需要调用getlasterror()。*/
   dwRet = osSetFilePointer(pFile->h, lowerBits, &upperBits, FILE_BEGIN);
 
   if( (dwRet==INVALID_SET_FILE_POINTER
@@ -1951,10 +2033,10 @@ static int seekWinFile(winFile *pFile, sqlite3_int64 iOffset){
 #else
   /*
   ** Same as above, except that this implementation works for WinRT.
-  */
+  *//*同上面一样，只不过这实现工作WinRT*/
 
-  LARGE_INTEGER x;                /* The new offset */
-  BOOL bRet;                      /* Value returned by SetFilePointerEx() */
+  LARGE_INTEGER x;                /* The new offset *//*新的偏移*/
+  BOOL bRet;                      /* Value returned by SetFilePointerEx() *//*通过setfilepointerex()返回值*/
 
   x.QuadPart = iOffset;
   bRet = osSetFilePointerEx(pFile->h, x, 0, FILE_BEGIN);
@@ -1979,7 +2061,10 @@ static int seekWinFile(winFile *pFile, sqlite3_int64 iOffset){
 ** the close fails, we pause for 100 milliseconds and try again.  As
 ** many as MX_CLOSE_ATTEMPT attempts to close the handle are made before
 ** giving up and returning an error.
-*/
+*//*关闭文件。据悉，试图关闭一个句柄可能有时会失败。
+这是一个非常不合理的结果，但Windows是不合理的，
+我不相信这会发生的。如果关闭失败，我们暂停100毫秒后再试一次。
+作为mx_close_attempt试图关闭该句柄是在放弃之前，导致一个错误。*/
 #define MX_CLOSE_ATTEMPT 3
 static int winClose(sqlite3_file *id){
   int rc, cnt = 0;
@@ -1992,7 +2077,7 @@ static int winClose(sqlite3_file *id){
   OSTRACE(("CLOSE %d\n", pFile->h));
   do{
     rc = osCloseHandle(pFile->h);
-    /* SimulateIOError( rc=0; cnt=MX_CLOSE_ATTEMPT; ); */
+    /* SimulateIOError( rc=0; cnt=MX_CLOSE_ATTEMPT; ); *//*模拟错误的发生，最大的关闭尝试次数*/ 
   }while( rc==0 && ++cnt < MX_CLOSE_ATTEMPT && (sqlite3_win32_sleep(100), 1) );
 #if SQLITE_OS_WINCE
 #define WINCE_DELETION_ATTEMPTS 3
@@ -2004,7 +2089,7 @@ static int winClose(sqlite3_file *id){
         && osGetFileAttributesW(pFile->zDeleteOnClose)!=0xffffffff 
         && cnt++ < WINCE_DELETION_ATTEMPTS
     ){
-       sqlite3_win32_sleep(100);  /* Wait a little before trying again */
+       sqlite3_win32_sleep(100);  /* Wait a little before trying again *//*再次尝试之前等待一100秒*/
     }
     sqlite3_free(pFile->zDeleteOnClose);
   }
@@ -2023,19 +2108,20 @@ static int winClose(sqlite3_file *id){
 ** Read data from a file into a buffer.  Return SQLITE_OK if all
 ** bytes were read successfully and SQLITE_IOERR if anything goes
 ** wrong.
-*/
+*//*从一个文件到一个缓冲区读取数据。
+如果所有字节成功和SQLITE_IOERR能阅读的话，返回SQLITE_OK，如果有错误就不返回k*/
 static int winRead(
-  sqlite3_file *id,          /* File to read from */
-  void *pBuf,                /* Write content into this buffer */
-  int amt,                   /* Number of bytes to read */
-  sqlite3_int64 offset       /* Begin reading at this offset */
+  sqlite3_file *id,          /* File to read from *//*文件读取*/
+  void *pBuf,                /* Write content into this buffer *//*该缓冲区的内容写入*/
+  int amt,                   /* Number of bytes to read *//*读取的字节数*/
+  sqlite3_int64 offset       /* Begin reading at this offset *//*在这个偏移量开始阅读*/
 ){
 #if !SQLITE_OS_WINCE
-  OVERLAPPED overlapped;          /* The offset for ReadFile. */
+  OVERLAPPED overlapped;          /* The offset for ReadFile. *//*对于ReadFile偏移*/
 #endif
-  winFile *pFile = (winFile*)id;  /* file handle */
-  DWORD nRead;                    /* Number of bytes actually read from file */
-  int nRetry = 0;                 /* Number of retrys */
+  winFile *pFile = (winFile*)id;  /* file handle *//*文件句柄*/
+  DWORD nRead;                    /* Number of bytes actually read from file *//*从文件中读取的字节数*/
+  int nRetry = 0;                 /* Number of retrys *//*retrys数*/
 
   assert( id!=0 );
   SimulateIOError(return SQLITE_IOERR_READ);
@@ -2061,7 +2147,7 @@ static int winRead(
   }
   logIoerr(nRetry);
   if( nRead<(DWORD)amt ){
-    /* Unread parts of the buffer must be zero-filled */
+    /* Unread parts of the buffer must be zero-filled *//*缓冲区的未读的部分必须是零填充*/
     memset(&((char*)pBuf)[nRead], 0, amt-nRead);
     return SQLITE_IOERR_SHORT_READ;
   }
@@ -2072,16 +2158,16 @@ static int winRead(
 /*
 ** Write data from a buffer into a file.  Return SQLITE_OK on success
 ** or some other error code on failure.
-*/
+*//*从缓冲区写入数据到文件。成功返回sqlite_ok否则有一些错误代码就失败*/
 static int winWrite(
-  sqlite3_file *id,               /* File to write into */
-  const void *pBuf,               /* The bytes to be written */
-  int amt,                        /* Number of bytes to write */
-  sqlite3_int64 offset            /* Offset into the file to begin writing at */
+  sqlite3_file *id,               /* File to write into *//*文件写入*/
+  const void *pBuf,               /* The bytes to be written *//*要写入的字节*/
+  int amt,                        /* Number of bytes to write *//*写的字节数*/
+  sqlite3_int64 offset            /* Offset into the file to begin writing at *//*文件的偏移开始写入部分*/
 ){
-  int rc = 0;                     /* True if error has occured, else false */
-  winFile *pFile = (winFile*)id;  /* File handle */
-  int nRetry = 0;                 /* Number of retries */
+  int rc = 0;                     /* True if error has occured, else false *//*如果发生错误，则为真，否则为假/
+  winFile *pFile = (winFile*)id;  /* File handle *//*文件句柄*/
+  int nRetry = 0;                 /* Number of retries *//*重试次数*/
 
   assert( amt>0 );
   assert( pFile );
